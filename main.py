@@ -1,103 +1,180 @@
-import discord
-import os
-import random
+import discord, os, random, json
 
 
-# Rolls a set of dice and returns a list of rolls
-def roll_dice(dice):
-
-    # If someone inputs a d20 type string
-    if dice[0] == '':
-        num = 1
-        sides = int(dice[1])
-
-    elif dice[0] == '0' or dice[1] == '0':
-        return [0]
-
-    # Normal setup
+# Checks if the user requests a secret roll
+def check_secret(command):
+    if 'secret' in command:
+        return True
     else:
-        num = int(dice[0])
-        sides = int(dice[1])
-
-    rolls = []
-
-    for i in range(num):
-        rolls.append(random.randint(1, sides))
-
-    return rolls
+        return False
 
 
-# Get the modifier
-def get_mod(mod):
-    mod = list(mod)
-
-    if ' ' in mod:
-        mod.remove(' ')
-
-    if len(mod) >= 3:
-        for i in range(2, len(mod)):
-            mod[1] += mod[i]
-
-    if mod[0] == '+':
-        return int(mod[1])
+# Makes sure the dice roll can be sent to the channel if the message is too large
+def character_limiter(text):
+    if len(text) >= 2000:
+        return True
     else:
-        return -int(mod[1])
+        return False
 
 
-# Return the modifier as a string
-def get_mod_text(mod):
-    if (mod != ''):
-        return '\nModifier: ' + mod.replace(' ', '')
+# Replaces substrings from a string
+def strip_parts(word, stuff=' '):
+    return word.replace(stuff, '')
+
+
+# Grabs a response from a JSON file of responses
+def get_response(category="start"):
+    with open('responses.json') as f:
+        temp = json.load(f)
+        responses = temp[category]
+
+    return random.choice(responses)
+
+
+# Returns a or an depending on the number rolled for grammer's sake
+def grammer(total):
+    checks = [8, 11, 18, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89]
+    if total in checks:
+        return ' an '
+    else:
+        return ' a '
+
+
+# Checks if the total comes out to something funny
+def nice(total):
+    with open("responses.json", "r") as f:
+        temp = json.load(f)
+        quotes = temp["nice"]
+
+    if str(total) in quotes:
+        text = quotes[str(total)]
+    else:
+        text = ''
+
+    return text
+
+
+# Checks if a d20 roll is a crit
+def crit(roll):
+    if roll == 20:
+        return "\n" + get_response("nat20")
+    elif roll == 1:
+        return "\n" + get_response("nat1")
     else:
         return ''
 
 
-# Return a string of rolls
-def get_rolls_text(rolls):
-    dice_text = 'Dice Rolls: '
-
+# Returns a string of the rolls and totals
+def stringify_rolls(rolls, mod):
+    text = get_response() + ' '
     for i in range(len(rolls)):
         if i == len(rolls) - 1:
-            dice_text += ' ' + str(rolls[i])
+            text += str(rolls[i])
         else:
-            dice_text += ' {},'.format(rolls[i])
+            text += str(rolls[i]) + ', '
+    text += ' ' + mod
 
-    return dice_text
-
-
-# Return the sum total
-def get_total_text(rolls, n):
-    total = sum(rolls) + n
-    return '\nTotal: ' + str(total) + nice(total)
-
-
-# Checks if the total has a funny outcome
-def nice(num):
-    if num == 69:
-        output = '\nNice!'
-    elif num == 6969:
-        output = '\nSuper Nice!'
-    elif num == 420:
-        output = '\nBlaze It!'
+    if mod == '':
+        total = sum(rolls)
     else:
-        output = ''
+        total = sum(rolls) + get_mod(mod)
 
-    return output
+    if character_limiter(text):
+        text = get_response("end") + str(total)
+    else:
+        text += get_response("end") + str(total)
+
+    return text + nice(total)
 
 
-def crit(start, rolls):
-    temp = start.split(' ')[0]
+# Rolls dice from inputs
+def roll_dice(sides=20, num=1):
+    if sides == 0 or num == 0:
+        roll = 0
+    elif num == 1:
+        roll = random.randint(1, sides)
+    else:
+        roll = []
+        for i in range(num):
+            roll.append(random.randint(1, sides))
+    return roll
 
-    if temp == '1d20' or temp == '2d20':
-        if 20 in rolls:
-            return "\nThat's a crit!"
-        elif 1 in rolls:
-            return "\nThat's a crit fail!"
+
+# Returns an int modifier if one is given
+def get_mod(word):
+    word = strip_parts(word)
+    if word.startswith('+'):
+        mod = int(word.strip('+'))
+    elif word.startswith('-'):
+        mod = int(word)
+    else:
+        mod = ''
+    return mod
+
+
+# Rolling 2d20 with Advantage/Disadvantage
+def vantage(start):
+    temp = start.split(' ', 1)
+
+    if len(temp) > 1:
+        mod = get_mod(strip_parts(temp[1]))
+    else:
+        temp.append('')
+        mod = 0
+
+    rolls = roll_dice(num=2)
+
+    text = get_response() + grammer(rolls[0]) + str(rolls[0]) + ' and ' + str(
+        rolls[1]) + ' ' + temp[1]
+
+    if temp[0].startswith('adv'):
+        text += "\nYou get to use " + str(max(rolls) + mod) + crit(max(rolls))
+    else:
+        text += "\nYou get to use " + str(min(rolls) + mod) + crit(min(rolls))
+
+    return text
+
+
+# Rolling a specific series of dice
+def normal_dice(start):
+    temp = start.split(' ', 1)
+
+    if len(temp) == 1:
+        temp.append('')
+
+    dice = temp[0].split('d')
+    rolls = roll_dice(num=int(dice[0]), sides=int(dice[1]))
+
+    return stringify_rolls(rolls, temp[1])
+
+
+def roll_20s(start):
+    
+    if start == '':
+        mod = 0
+        roll = roll_dice()
+    elif start.startswith('perc'):
+        temp = start.split(' ', 1)
+        if len(temp) == 1:
+            mod = 0
+            start = ''
         else:
-            return ''
-
+            start = strip_parts(temp[1])
+            mod = get_mod(start)
+        roll = roll_dice(sides=100)
     else:
-        return ''
+        mod = get_mod(strip_parts(start))
+        roll = roll_dice()
+    total = roll + mod
+
+    text = get_response() + grammer(roll) + str(roll)
+
+    if mod == 0:
+        text += start + crit(roll)
+    else:
+        text += strip_parts(start) + get_response("end") + str(total) + crit(roll)
+
+    return text
 
 
 client = discord.Client()
@@ -119,59 +196,50 @@ async def on_message(message):
 
     msg = message.content.lower()
 
-    # Test message to make sure things are working
-    if msg.startswith('$hello'):
-        await message.channel.send('Hello!')
-
-    # Outputs rolls
-    if msg.startswith('$rol'):
-        start = msg.split(' ', 1)[1]
-
-        # Checks if percentile is called
-        if 'perc' in start:
-            roll = random.randint(1, 100)
-
-            mod = ''
-            if ' ' in start:
-                temp = start.split(' ', 1)
-                mod = temp[1]
-
-                n = 0
-                if mod != '':
-                    n = get_mod(mod)
-
-                text = 'Percentile: ' + str(roll) + get_mod_text(
-                    mod) + get_total_text([roll], n)
-
-            else:
-                text = 'Percentile: ' + str(roll) + nice(roll)
-
-        # Help command
-        elif start == 'help':
-            text = 'My name is Raleigh, the dice rolling robot!\nCommands: \nGet some Help - $roll help\nRoll Dice - $roll 4d6\nRoll Dice with a Modifier - $roll 4d6 +3\nRoll Percentile Dice - $roll percentile\nRoll Percentiles with a Modifier - $roll percentile +5'
-
-        # Sanity check if someone puts in too many dice at once
-        elif int(start.split('d', 1)[0]) > 500:
-            text = "That's too many dice for me to roll. I can only roll a max of 500"
-
-        # Rolling normal dice
-        else:
-            mod = ''
-            if ' ' in start:
-                temp = start.split(' ', 1)
-                mod = temp[1]
-                rolls = roll_dice(temp[0].split('d', 1))
-            else:
-                rolls = roll_dice(start.split('d', 1))
-
-            n = 0
-            if mod != '':
-                n = get_mod(mod)
-
-            text = get_rolls_text(rolls) + get_mod_text(mod) + get_total_text(
-                rolls, n) + crit(start, rolls)
-
+    if msg == '$roll help':
+        text = ''
+        with open('help.txt') as f:
+            for line in f:
+                text += line
         await message.channel.send(text)
 
+    elif msg.startswith('$roll'):
+        secret = check_secret(msg)
 
+        # Checks if a modifier/more commands are given
+        if msg == "$roll":
+            start = ''
+        else:
+            start = msg.split(' ', 1)[1]
+            start = strip_parts(start, 'secret')
+
+        # Just rolls a d20
+        if start == '':
+            text = roll_20s(start)
+
+        # Roll a d20 with a modifier
+        elif start.startswith('+') or start.startswith('-'):
+            text = roll_20s(start)
+
+        # Roll 2d20 with advantage with or without a modifier
+        elif start.startswith('adv') or start.startswith('dis'):
+            text = vantage(start)
+
+        # Roll other specific device
+        elif start[0].isdigit():
+            text = normal_dice(start)
+
+        # Roll percentile dice
+        elif start.startswith('perc'):
+            text = roll_20s(start)
+
+        # Checks if the user wants to make the roll a secret or not
+        if secret:
+            await message.channel.send(get_response("secret"))
+            await message.author.send(text)
+        else:
+            await message.channel.send(text)
+
+
+# The run command for the bot
 client.run(os.getenv('TOKEN'))

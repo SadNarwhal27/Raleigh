@@ -1,0 +1,68 @@
+{
+    "start" : [
+        "We got",
+        "You got",
+        "Looks like",
+        "That's",
+        "I got",
+        "Got",
+        "How about",
+        "Someone got",
+        "Hey look,",
+        "Have you seen",
+        "Sending good vibes and",
+        "Whoa,",
+        "It's",
+        "I hope you like",
+        "Phone, keys, wallet, and",
+        "Check it out. It's",
+        "Here's",
+        "Rolled",
+        "Found",
+        "Brought you",
+        "Ever try",
+        "Russeled up",
+        "Totally didn't fabricate",
+        "Could it be",
+        "Fresh out the oven, it's"
+    ],
+
+    "secret" : [
+        "Secret message sent.",
+        "Check your DMs.",
+        "This is our little secret. 😉",
+        "Shhhhhhhhhhhh"
+    ],
+
+    "nat20" : [
+        "Nat 20!",
+        "That's a crit!",
+        "Way to go!",
+        "🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥",
+        "👍"
+    ],
+
+    "nat1" : [
+        "Better luck next time.",
+        "That's a crit fail!",
+        "Sorry about that.",
+        "That's a bummer",
+        "😢"
+    ],
+
+    "end" : [
+        "\nThat's ",
+        "\nTotal is ",
+        "\nAll together we have "
+    ],
+
+    "nice" : {
+        "69" : "\nNice! 😊",
+        "404" : "\nRoll not found! 😵",
+        "420" : "\nBlaze it! 🌿",
+        "666" : "\nHail Satan! 🤘",
+        "877" : "\n877 CASH NOW! 💸",
+        "911" : "\nIt's an emergency! ☎️",
+        "24601" : "\nJean Valjean!"
+    }
+}
