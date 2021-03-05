@@ -35,25 +35,25 @@
     ],
 
     "nat20" : [
-        "Nat 20!",
-        "That's a crit!",
-        "Way to go!",
-        "🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥",
-        "👍"
+        "\nNat 20!",
+        "\nThat's a crit!",
+        "\nWay to go!",
+        "\n🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥",
+        "\n👍"
     ],
 
     "nat1" : [
-        "Better luck next time.",
-        "That's a crit fail!",
-        "Sorry about that.",
-        "That's a bummer",
-        "😢"
+        "\nBetter luck next time.",
+        "\nThat's a crit fail!",
+        "\nSorry about that.",
+        "\nThat's a bummer",
+        "\n😢"
     ],
 
     "end" : [
-        "\nThat's ",
-        "\nTotal is ",
-        "\nAll together we have "
+        "\nThat's {}",
+        "\nTotal is {}",
+        "\nAll together we have {}"
     ],
 
     "nice" : {
