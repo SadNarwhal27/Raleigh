@@ -1,13 +1,18 @@
-**d20 Based Commands:**
-*Roll a d20* - $roll
-*Add a Modifier* - $roll +5
-*Roll with Advantage/Disadvantage* - $roll advantage or $roll disadvantage
+**Commands for Rolling d20s:**
+*Roll a d20* - `$roll`
+*Add a Modifier* - `$roll +5`
+*Roll with Advantage/Disadvantage* - `$roll advantage` or `$roll disadvantage`
 
-**Other Dice Commands:**
-*Roll Percentile Dice* - $roll percentile
-*Roll a Series of Dice* - $roll 4d6
-*Add a Modifier* - $roll 4d6 +5
+**Commands for Rolling Other Dice:**
+*Roll Percentile Dice* - `$roll percentile`
+*Roll a Series of Dice* - `$roll 4d6`
+*Add a Modifier* - `$roll 4d6 +5`
+*Reroll Dice Once Below a Set Number* - `$roll 4d6 +5 reroll 2`
+
+**D&D 5e Commands:**
+*Roll Character Stats* - `$roll stats`
+*Drink a Healing Potion* - `$roll potion healing/greater/superior/supreme`
 
 **Utility Commands:**
-*Get a List of Commands* - $roll help
-*Turn a Roll into a PM* - $roll 4d6 +5 secret
+*Get a List of Commands* - `$roll help`
+*Turn a Roll into a PM* - `$roll 4d6 +5 secret`

@@ -31,9 +31,20 @@ def get_response(category="start"):
     return random.choice(responses)
 
 
+def check_reroll(command):
+    temp = command.split("reroll ")
+    if len(temp) == 1:
+        temp.append('0')
+    return temp
+
+
 # Returns a or an depending on the number rolled for grammer's sake
 def grammer(total):
     checks = [8, 11, 18, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89]
+
+    for i in range(800, 899):
+        checks.append(i)
+
     if total in checks:
         return ' an '
     else:
@@ -66,7 +77,13 @@ def crit(roll):
 
 # Returns a string of the rolls and totals
 def stringify_rolls(rolls, mod):
-    text = get_response() + ' '
+    text = get_response()
+
+    if type(rolls) != list:
+        rolls = [rolls]
+
+    text += grammer(rolls[0])
+
     for i in range(len(rolls)):
         if i == len(rolls) - 1:
             text += str(rolls[i])
@@ -79,24 +96,33 @@ def stringify_rolls(rolls, mod):
     else:
         total = sum(rolls) + get_mod(mod)
 
-    if character_limiter(text):
-        text = get_response("end") + str(total)
-    else:
+    # Checks if only 1 die is rolled
+    if len(rolls) != 1:
+        if character_limiter(text):
+            text = get_response("end") + str(total)
+        else:
+            text += get_response("end") + str(total)
+    elif len(rolls) == 1 and mod != '':
         text += get_response("end") + str(total)
 
     return text + nice(total)
 
 
 # Rolls dice from inputs
-def roll_dice(sides=20, num=1):
+def roll_dice(sides=20, num=1, reroll=0):
     if sides == 0 or num == 0:
         roll = 0
     elif num == 1:
         roll = random.randint(1, sides)
+        if roll <= reroll:
+            roll = random.randint(1, sides)
     else:
         roll = []
         for i in range(num):
-            roll.append(random.randint(1, sides))
+            temp = random.randint(1, sides)
+            if temp <= reroll:
+                temp = random.randint(1, sides)
+            roll.append(temp)
     return roll
 
 
@@ -140,16 +166,23 @@ def normal_dice(start):
     temp = start.split(' ', 1)
 
     if len(temp) == 1:
-        temp.append('')
+        mod = ''
+        reroll = 0
+    else:
+        mod, reroll = map(str, check_reroll(temp[1]))
 
     dice = temp[0].split('d')
-    rolls = roll_dice(num=int(dice[0]), sides=int(dice[1]))
+    if dice[0] == '':
+        dice[0] = 1
 
-    return stringify_rolls(rolls, temp[1])
+    rolls = roll_dice(reroll=int(reroll), num=int(dice[0]), sides=int(dice[1]))
+
+    return stringify_rolls(rolls, mod)
 
 
+# Rolling d20s or percentile dice
 def roll_20s(start):
-    
+
     if start == '':
         mod = 0
         roll = roll_dice()
@@ -172,9 +205,51 @@ def roll_20s(start):
     if mod == 0:
         text += start + crit(roll)
     else:
-        text += strip_parts(start) + get_response("end") + str(total) + crit(roll)
+        text += strip_parts(start) + get_response("end") + str(total) + crit(
+            roll)
 
     return text
+
+
+# Roll 7 sets of 4d6, drop the lowest roll, and output to channel
+def stat_block():
+    stats = []
+
+    for i in range(7):
+        temp = roll_dice(sides=6, num=4)
+        temp.remove(min(temp))
+        stats.append(sum(temp))
+
+    text = get_response('stats')
+    for i in range(7):
+        if i == 6:
+            text += get_response('mulligans').format(str(stats[i]))
+        elif i == 5:
+            text += str(stats[i])
+        else:
+            text += str(stats[i]) + ', '
+
+    return text
+
+
+# Drink health potion
+def drink_potions(start):
+    potion = start.split(' ')[1]
+
+    if potion.startswith('heal'):
+        mod = num = 2
+    elif potion.startswith('great'):
+        mod = num = 4
+    elif potion.startswith('super'):
+        mod = num = 8
+    elif potion.startswith('supre'):
+        num = 10
+        mod = 20
+    else:
+        return "I don't think I know that potion"
+
+    hp = sum(roll_dice(4, num)) + mod
+    return get_response('health').format(hp)
 
 
 client = discord.Client()
@@ -226,12 +301,19 @@ async def on_message(message):
             text = vantage(start)
 
         # Roll other specific device
-        elif start[0].isdigit():
+        elif start[0].isdigit() or start[0] == 'd':
             text = normal_dice(start)
 
         # Roll percentile dice
         elif start.startswith('perc'):
             text = roll_20s(start)
+
+        # Roll character stats
+        elif start.startswith('stats'):
+            text = stat_block()
+
+        elif start.startswith('potion'):
+            text = drink_potions(start)
 
         # Checks if the user wants to make the roll a secret or not
         if secret:
@@ -242,4 +324,4 @@ async def on_message(message):
 
 
 # The run command for the bot
-client.run(os.getenv('TOKEN'))
+client.run(os.getenv('DISCORD_TOKEN'))

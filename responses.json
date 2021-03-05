@@ -64,5 +64,25 @@
         "877" : "\n877 CASH NOW! 💸",
         "911" : "\nIt's an emergency! ☎️",
         "24601" : "\nJean Valjean!"
-    }
+    },
+
+    "stats" : [
+        "Here's what I came up with\n",
+        "Excited for the new character\n",
+        "Hope you like your stats\n",
+        "Stupendous stats staggering ... stover\n",
+        "Good stats, coming to a channel near you\n"
+    ],
+
+    "mulligans" : [
+        "\nAnd {} for good luck",
+        "\nHere's a {} just in case you need it",
+        "\nI found an extra {} lying around if you're interested",
+        "\nNeed a Mulligan? How about {}"
+    ],
+
+    "health" : [
+        "You get {} HP back",
+        "Here's {} HP for you"
+    ]
 }
