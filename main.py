@@ -1,25 +1,22 @@
-import discord, os, random, json
+import discord, os, random, json, math
+from dotenv import load_dotenv
+from discord.ext import commands
 
 
-# Checks if the user requests a secret roll
-def check_secret(command):
-    if 'secret' in command:
-        return True
-    else:
-        return False
+# Returns the total from dice rolls plus a modifier
+def get_total(total, mod):
+    return math.floor(eval(total + mod))
 
 
-# Makes sure the dice roll can be sent to the channel if the message is too large
-def character_limiter(text):
-    if len(text) >= 2000:
-        return True
-    else:
-        return False
-
-
-# Replaces substrings from a string
-def strip_parts(word, stuff=' '):
-    return word.replace(stuff, '')
+# Rolls a set number of n-sided dice with an option to reroll numbers if desired
+def roll_dice(dice, sides, reroll=0):
+    rolls = []
+    for _ in range(dice):
+        temp = random.randint(1, sides)
+        if temp < reroll:
+            temp = random.randint(1, sides)
+        rolls.append(temp)
+    return rolls
 
 
 # Grabs a response from a JSON file of responses
@@ -27,301 +24,164 @@ def get_response(category="start"):
     with open('responses.json') as f:
         temp = json.load(f)
         responses = temp[category]
-
     return random.choice(responses)
 
 
-def check_reroll(command):
-    temp = command.split("reroll ")
-    if len(temp) == 1:
-        temp.append('0')
-    return temp
+load_dotenv()
+TOKEN = os.getenv('DISCORD_TOKEN')
+GUILD = int(os.getenv('DISCORD_GUILD'))
+
+bot = commands.Bot(command_prefix='$')
+bot.remove_command('help')
 
 
-# Returns a or an depending on the number rolled for grammer's sake
-def grammer(total):
-    checks = [8, 11, 18, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89]
-
-    for i in range(800, 899):
-        checks.append(i)
-
-    if total in checks:
-        return ' an '
-    else:
-        return ' a '
+# Outputs a ready message to console when bot is online
+@bot.event
+async def on_ready():
+    # Goes through every server the bot is in and finds the server you are working on that you set in .env
+    guild = discord.utils.get(bot.guilds, id=GUILD)
+    print(f'{bot.user} is connected to the following guild:\n'
+          f'{guild.name}(id: {guild.id})')
 
 
-# Checks if the total comes out to something funny
-def nice(total):
-    with open("responses.json", "r") as f:
-        temp = json.load(f)
-        quotes = temp["nice"]
-
-    if str(total) in quotes:
-        text = quotes[str(total)]
-    else:
-        text = ''
-
-    return text
-
-
-# Checks if a d20 roll is a crit
-def crit(roll):
-    if roll == 20:
-        return "\n" + get_response("nat20")
-    elif roll == 1:
-        return "\n" + get_response("nat1")
-    else:
-        return ''
+# Displays an embedded help doc for users
+@bot.command()
+async def help(ctx):
+    text = ''
+    with open('help.txt') as f:
+        for line in f:
+            text += line
+    embed = discord.Embed(title='Raleigh Commands',
+                          description=text,
+                          color=discord.Color.red())
+    await ctx.send(embed=embed)
 
 
-# Returns a string of the rolls and totals
-def stringify_rolls(rolls, mod):
-    text = get_response()
-
-    if type(rolls) != list:
-        rolls = [rolls]
-
-    text += grammer(rolls[0])
-
-    for i in range(len(rolls)):
-        if i == len(rolls) - 1:
-            text += str(rolls[i])
-        else:
-            text += str(rolls[i]) + ', '
-    text += ' ' + mod
-
-    if mod == '':
-        total = sum(rolls)
-    else:
-        total = sum(rolls) + get_mod(mod)
-
-    # Checks if only 1 die is rolled
-    if len(rolls) != 1:
-        if character_limiter(text):
-            text = get_response("end") + str(total)
-        else:
-            text += get_response("end") + str(total)
-    elif len(rolls) == 1 and mod != '':
-        text += get_response("end") + str(total)
-
-    return text + nice(total)
+# Flips a coin
+@bot.command(name='flip')
+async def flip_coin(ctx):
+    response = random.choice(['Heads', 'Tails'])
+    await ctx.send(response)
 
 
-# Rolls dice from inputs
-def roll_dice(sides=20, num=1, reroll=0):
-    if sides == 0 or num == 0:
-        roll = 0
-    elif num == 1:
-        roll = random.randint(1, sides)
-        if roll <= reroll:
-            roll = random.randint(1, sides)
-    else:
-        roll = []
-        for i in range(num):
-            temp = random.randint(1, sides)
-            if temp <= reroll:
-                temp = random.randint(1, sides)
-            roll.append(temp)
-    return roll
+# Does math
+@bot.command()
+async def calculate(ctx, *, message: str):
+    await ctx.send(eval(message))
 
 
-# Returns an int modifier if one is given
-def get_mod(word):
-    word = strip_parts(word)
-    if word.startswith('+'):
-        mod = int(word.strip('+'))
-    elif word.startswith('-'):
-        mod = int(word)
-    else:
-        mod = ''
-    return mod
-
-
-# Rolling 2d20 with Advantage/Disadvantage
-def vantage(start):
-    temp = start.split(' ', 1)
-
-    if len(temp) > 1:
-        mod = get_mod(strip_parts(temp[1]))
-    else:
-        temp.append('')
-        mod = 0
-
-    rolls = roll_dice(num=2)
-
-    text = get_response() + grammer(rolls[0]) + str(rolls[0]) + ' and ' + str(
-        rolls[1]) + ' ' + temp[1]
-
-    if temp[0].startswith('adv'):
-        text += "\nYou get to use " + str(max(rolls) + mod) + crit(max(rolls))
-    else:
-        text += "\nYou get to use " + str(min(rolls) + mod) + crit(min(rolls))
-
-    return text
-
-
-# Rolling a specific series of dice
-def normal_dice(start):
-    temp = start.split(' ', 1)
-
-    if len(temp) == 1:
-        mod = ''
-        reroll = 0
-    else:
-        mod, reroll = map(str, check_reroll(temp[1]))
-
-    dice = temp[0].split('d')
-    if dice[0] == '':
-        dice[0] = 1
-
-    rolls = roll_dice(reroll=int(reroll), num=int(dice[0]), sides=int(dice[1]))
-
-    return stringify_rolls(rolls, mod)
-
-
-# Rolling d20s or percentile dice
-def roll_20s(start):
-
-    if start == '':
-        mod = 0
-        roll = roll_dice()
-    elif start.startswith('perc'):
-        temp = start.split(' ', 1)
-        if len(temp) == 1:
-            mod = 0
-            start = ''
-        else:
-            start = strip_parts(temp[1])
-            mod = get_mod(start)
-        roll = roll_dice(sides=100)
-    else:
-        mod = get_mod(strip_parts(start))
-        roll = roll_dice()
-    total = roll + mod
-
-    text = get_response() + grammer(roll) + str(roll)
-
-    if mod == 0:
-        text += start + crit(roll)
-    else:
-        text += strip_parts(start) + get_response("end") + str(total) + crit(
-            roll)
-
-    return text
-
-
-# Roll 7 sets of 4d6, drop the lowest roll, and output to channel
-def stat_block():
+# Rolls 7 sets of 4d6 dropping the lowest roll
+@bot.command()
+async def character(ctx):
     stats = []
 
-    for i in range(7):
-        temp = roll_dice(sides=6, num=4)
-        temp.remove(min(temp))
-        stats.append(sum(temp))
+    for _ in range(6):
+        rolls = roll_dice(4, 6)
+        rolls.remove(min(rolls))
+        stats.append(sum(rolls))
 
     text = get_response('stats')
-    for i in range(7):
-        if i == 6:
-            text += get_response('mulligans').format(str(stats[i]))
-        elif i == 5:
-            text += str(stats[i])
-        else:
-            text += str(stats[i]) + ', '
+    text += ', '.join(list(map(str, stats)))
 
-    return text
+    mulligan = roll_dice(4, 6)
+    mulligan.remove(min(rolls))
+    text += get_response('mulligans').format(sum(mulligan))
+
+    await ctx.send(text)
 
 
-# Drink health potion
-def drink_potions(start):
-    potion = start.split(' ')[1]
-
-    if potion.startswith('heal'):
-        mod = num = 2
-    elif potion.startswith('great'):
-        mod = num = 4
-    elif potion.startswith('super'):
-        mod = num = 8
-    elif potion.startswith('supre'):
-        num = 10
-        mod = 20
+# Rolls a set of dice corresponding to a specific healing potion
+@bot.command()
+async def potion(ctx, *, drink=None):
+    potions = {
+        'healing': [2, 2],
+        'standard': [2, 2],
+        'greater': [4, 4],
+        'superior': [8, 8],
+        'supreme': [10, 20],
+    }
+    if drink != None and drink in potions:
+        temp = potions[drink]
     else:
-        return "I don't think I know that potion"
+        temp = [2, 2]
 
-    hp = sum(roll_dice(4, num)) + mod
-    return get_response('health').format(hp)
+    hp = sum(roll_dice(temp[0], 4)) + temp[1]
+    response = get_response('health').format(hp)
 
-
-client = discord.Client()
-
-
-# Starts up the bot
-@client.event
-async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
+    await ctx.send(response)
 
 
-# Main bot operations
-@client.event
-async def on_message(message):
+# The meat of the bot
+@bot.command()
+async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
+    check_words = ['secret', 'perc', 'percentile', 'percentiles', 'reroll']
+    vantage = False
 
-    # Sanity check to keep the bot from responding to itself
-    if message.author == client.user:
-        return
+    if setup == None:
+        dice, sides = 1, 20
+    elif 'adv' in setup or 'dis' in setup:
+        dice, sides = 2, 20
+        vantage = True
+    elif 'd' in setup:
+        temp = setup.split('d')
+        dice = int(temp[0])
+        sides = int(temp[1])
+    elif 'perc' in setup:
+        dice, sides = 1, 100
+    else:
+        dice, sides = 1, 20
 
-    msg = message.content.lower()
-
-    if msg == '$roll help':
-        text = ''
-        with open('help.txt') as f:
-            for line in f:
-                text += line
-        await message.channel.send(text)
-
-    elif msg.startswith('$roll'):
-        secret = check_secret(msg)
-
-        # Checks if a modifier/more commands are given
-        if msg == "$roll":
-            start = ''
+    if tail == None:
+        rolls = roll_dice(dice, sides)
+    elif mod == 'reroll':
+        rolls = roll_dice(dice, sides, int(tail.split(' ', 1)[0]))
+    elif 'reroll' in tail:
+        temp = tail.replace('reroll ', '')
+        if ' ' in temp:
+            temp = int(temp.split(' ', 1)[0])
         else:
-            start = msg.split(' ', 1)[1]
-            start = strip_parts(start, 'secret')
+            temp = int(temp)
+        rolls = roll_dice(dice, sides, temp)
+    else:
+        rolls = roll_dice(dice, sides)
 
-        # Just rolls a d20
-        if start == '':
-            text = roll_20s(start)
+    text = get_response() + ' '
+    text_rolls = ', '.join(list(map(str, rolls)))
+    response = text + text_rolls
 
-        # Roll a d20 with a modifier
-        elif start.startswith('+') or start.startswith('-'):
-            text = roll_20s(start)
+    if not vantage:
+        if len(rolls) > 1:
+            total = str(sum(rolls))
+            if mod != None and mod not in check_words:
+                total = get_total(total, mod)
+            response += get_response('end').format(total)
 
-        # Roll 2d20 with advantage with or without a modifier
-        elif start.startswith('adv') or start.startswith('dis'):
-            text = vantage(start)
+            if total == '69':
+                response += '\nNice! 😊'
+        elif setup != None and setup not in check_words:
+            total = get_total(text_rolls, setup)
+            response += get_response('end').format(total)
 
-        # Roll other specific device
-        elif start[0].isdigit() or start[0] == 'd':
-            text = normal_dice(start)
-
-        # Roll percentile dice
-        elif start.startswith('perc'):
-            text = roll_20s(start)
-
-        # Roll character stats
-        elif start.startswith('stats'):
-            text = stat_block()
-
-        elif start.startswith('potion'):
-            text = drink_potions(start)
-
-        # Checks if the user wants to make the roll a secret or not
-        if secret:
-            await message.channel.send(get_response("secret"))
-            await message.author.send(text)
+            if total == '69':
+                response += '\nNice! 😊'
+    else:
+        if 'adv' in ctx.message.content:
+            if 20 == max(rolls):
+                response += get_response('nat20')
+            elif 1 == max(rolls):
+                response += get_response('nat1')
         else:
-            await message.channel.send(text)
+            if 20 == min(rolls):
+                response += get_response('nat20')
+            elif 1 == min(rolls):
+                response += get_response('nat1')
+
+    if 'secret' in ctx.message.content.lower():
+        await ctx.message.author.create_dm()
+        await ctx.message.author.dm_channel.send(response)
+        await ctx.send(get_response('secret'))
+    else:
+        await ctx.send(response)
 
 
-# The run command for the bot
-client.run(os.getenv('DISCORD_TOKEN'))
+bot.run(TOKEN)
