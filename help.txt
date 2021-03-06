@@ -10,9 +10,11 @@
 *Reroll Dice Once Below a Set Number* - `$roll 4d6 +5 reroll 2`
 
 **D&D 5e Commands:**
-*Roll Character Stats* - `$roll stats`
-*Drink a Healing Potion* - `$roll potion healing/greater/superior/supreme`
+*Roll Character Stats* - `$character`
+*Drink a Healing Potion* - `$potion healing/greater/superior/supreme`
 
 **Utility Commands:**
-*Get a List of Commands* - `$roll help`
+*Get a List of Commands* - `$help`
 *Turn a Roll into a PM* - `$roll 4d6 +5 secret`
+*Do some math* - `$calculate (10 + 3) * 5`
+*Flip a coin* - `$flip`
