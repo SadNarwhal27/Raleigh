@@ -5,6 +5,9 @@ from discord.ext import commands
 
 # Returns the total from dice rolls plus a modifier
 def get_total(total, mod):
+    if '1d' in mod:
+        mod = ''
+        
     return math.floor(eval(total + mod))
 
 
@@ -159,8 +162,16 @@ async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
             if total == '69':
                 response += '\nNice! 😊'
         elif setup != None and setup not in check_words:
-            total = get_total(text_rolls, setup)
-            response += get_response('end').format(total)
+            
+            if mod != None and mod not in check_words:
+                total = get_total(text_rolls, mod)
+            else:
+                total = get_total(text_rolls, setup)
+
+            if '1d' not in setup:
+                response += get_response('end').format(total)
+            elif mod != None and mod not in check_words:
+                response += get_response('end').format(total)
 
             if total == '69':
                 response += '\nNice! 😊'
