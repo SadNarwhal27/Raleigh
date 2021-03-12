@@ -3,11 +3,32 @@ from dotenv import load_dotenv
 from discord.ext import commands
 
 
+# Determine the number of dice, their sides, and if vantage is called
+def get_dice(setup):
+    vantage = False
+
+    if setup == None:
+        dice, sides = 1, 20
+    elif 'adv' in setup or 'dis' in setup:
+        dice, sides = 2, 20
+        vantage = True
+    elif 'd' in setup.lower():
+        temp = (setup.lower()).split('d')
+        dice = int(temp[0])
+        sides = int(temp[1])
+    elif 'perc' in setup.lower():
+        dice, sides = 1, 100
+    else:
+        dice, sides = 1, 20
+
+    return dice, sides, vantage
+
+
 # Returns the total from dice rolls plus a modifier
 def get_total(total, mod):
-    if '1d' in mod:
+    if '1d' in mod.lower():
         mod = ''
-        
+
     return math.floor(eval(total + mod))
 
 
@@ -30,11 +51,56 @@ def get_response(category="start"):
     return random.choice(responses)
 
 
+# Checks the total for funny numbers
+def check_nice(total):
+    if total == '69':
+        return '\nNice! 😊'
+    else:
+        return ''
+
+
+# Outputs the dice rolls
+def get_rolls(mod, tail, dice, sides):
+    if tail == None:
+        rolls = roll_dice(dice, sides)
+    elif mod.lower() == 'reroll':
+        rolls = roll_dice(dice, sides, int(tail.split(' ', 1)[0]))
+    elif 'reroll' in tail.lower():
+        tail = tail.lower()
+        temp = tail.replace('reroll ', '')
+        if ' ' in temp:
+            temp = int(temp.split(' ', 1)[0])
+        else:
+            temp = int(temp)
+        rolls = roll_dice(dice, sides, temp)
+    else:
+        rolls = roll_dice(dice, sides)
+
+    return rolls
+
+
+# Checks if a Nat 20 or Nat 1
+def get_vantage(content, rolls):
+    response = ''
+    content = content.lower()
+    if 'adv' in content:
+        if 20 == max(rolls):
+            response += get_response('nat20')
+        elif 1 == max(rolls):
+            response += get_response('nat1')
+    else:
+        if 20 == min(rolls):
+            response += get_response('nat20')
+        elif 1 == min(rolls):
+            response += get_response('nat1')
+    return response
+
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = int(os.getenv('DISCORD_GUILD'))
 
-bot = commands.Bot(command_prefix='$')
+bot = commands.Bot(command_prefix='$', case_insensitive=True)
 bot.remove_command('help')
 
 
@@ -103,8 +169,8 @@ async def potion(ctx, *, drink=None):
         'superior': [8, 8],
         'supreme': [10, 20],
     }
-    if drink != None and drink in potions:
-        temp = potions[drink]
+    if drink != None and drink.lower() in potions:
+        temp = potions[drink.lower()]
     else:
         temp = [2, 2]
 
@@ -118,36 +184,14 @@ async def potion(ctx, *, drink=None):
 @bot.command()
 async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
     check_words = ['secret', 'perc', 'percentile', 'percentiles', 'reroll']
-    vantage = False
 
-    if setup == None:
-        dice, sides = 1, 20
-    elif 'adv' in setup or 'dis' in setup:
-        dice, sides = 2, 20
-        vantage = True
-    elif 'd' in setup:
-        temp = setup.split('d')
-        dice = int(temp[0])
-        sides = int(temp[1])
-    elif 'perc' in setup:
-        dice, sides = 1, 100
-    else:
-        dice, sides = 1, 20
+    # Determine the number of dice, their sides, and if vantage is called
+    dice, sides, vantage = get_dice(setup)
 
-    if tail == None:
-        rolls = roll_dice(dice, sides)
-    elif mod == 'reroll':
-        rolls = roll_dice(dice, sides, int(tail.split(' ', 1)[0]))
-    elif 'reroll' in tail:
-        temp = tail.replace('reroll ', '')
-        if ' ' in temp:
-            temp = int(temp.split(' ', 1)[0])
-        else:
-            temp = int(temp)
-        rolls = roll_dice(dice, sides, temp)
-    else:
-        rolls = roll_dice(dice, sides)
+    # Gets the dice rolls needed
+    rolls = get_rolls(mod, tail, dice, sides)
 
+    # Starts assembling a response
     text = get_response() + ' '
     text_rolls = ', '.join(list(map(str, rolls)))
     response = text + text_rolls
@@ -157,35 +201,22 @@ async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
             total = str(sum(rolls))
             if mod != None and mod not in check_words:
                 total = get_total(total, mod)
-            response += get_response('end').format(total)
+            response += get_response('end').format(total) + check_nice(total)
 
-            if total == '69':
-                response += '\nNice! 😊'
         elif setup != None and setup not in check_words:
-            
             if mod != None and mod not in check_words:
                 total = get_total(text_rolls, mod)
             else:
                 total = get_total(text_rolls, setup)
 
-            if '1d' not in setup:
-                response += get_response('end').format(total)
+            if '1d' not in setup.lower():
+                response += get_response('end').format(total) + check_nice(
+                    total)
             elif mod != None and mod not in check_words:
-                response += get_response('end').format(total)
-
-            if total == '69':
-                response += '\nNice! 😊'
+                response += get_response('end').format(total) + check_nice(
+                    total)
     else:
-        if 'adv' in ctx.message.content:
-            if 20 == max(rolls):
-                response += get_response('nat20')
-            elif 1 == max(rolls):
-                response += get_response('nat1')
-        else:
-            if 20 == min(rolls):
-                response += get_response('nat20')
-            elif 1 == min(rolls):
-                response += get_response('nat1')
+        response += get_vantage(ctx.message.content, rolls)
 
     if 'secret' in ctx.message.content.lower():
         await ctx.message.author.create_dm()
