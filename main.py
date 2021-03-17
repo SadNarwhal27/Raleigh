@@ -1,4 +1,5 @@
 import discord, os, random, json, math
+from simpleeval import simple_eval
 from dotenv import load_dotenv
 from discord.ext import commands
 
@@ -29,7 +30,7 @@ def get_total(total, mod):
     if '1d' in mod.lower():
         mod = ''
 
-    return math.floor(eval(total + mod))
+    return math.floor(simple_eval(total + mod))
 
 
 # Rolls a set number of n-sided dice with an option to reroll numbers if desired
@@ -136,7 +137,7 @@ async def flip_coin(ctx):
 # Does math
 @bot.command()
 async def calculate(ctx, *, message: str):
-    await ctx.send(eval(message))
+    await ctx.send(simple_eval(message))
 
 
 # Rolls 7 sets of 4d6 dropping the lowest roll

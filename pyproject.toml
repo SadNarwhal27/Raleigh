@@ -8,6 +8,7 @@ authors = ["Your Name <you@example.com>"]
 python = "^3.8"
 discord = "^1.0.1"
 python-dotenv = "^0.15.0"
+simpleeval = "^0.9.10"
 
 [tool.poetry.dev-dependencies]
 

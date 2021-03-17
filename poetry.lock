@@ -102,6 +102,14 @@ cli = ["click (>=5.0)"]
 
 [[package]]
 category = "main"
+description = "A simple, safe single expression evaluator library."
+name = "simpleeval"
+optional = false
+python-versions = "*"
+version = "0.9.10"
+
+[[package]]
+category = "main"
 description = "Backported and Experimental Type Hints for Python 3.5+"
 name = "typing-extensions"
 optional = false
@@ -121,7 +129,7 @@ idna = ">=2.0"
 multidict = ">=4.0"
 
 [metadata]
-content-hash = "c4671a229780313e1578a792b235057fc2edac48e517f3b65ee4d97701cb626f"
+content-hash = "77c63fca2529fcdeae23bcd073c61d0fff8987d8d361384271498e8573b9e336"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -230,6 +238,9 @@ multidict = [
 python-dotenv = [
     {file = "python-dotenv-0.15.0.tar.gz", hash = "sha256:587825ed60b1711daea4832cf37524dfd404325b7db5e25ebe88c495c9f807a0"},
     {file = "python_dotenv-0.15.0-py2.py3-none-any.whl", hash = "sha256:0c8d1b80d1a1e91717ea7d526178e3882732420b03f08afea0406db6402e220e"},
+]
+simpleeval = [
+    {file = "simpleeval-0.9.10.tar.gz", hash = "sha256:692055488c2864637f6c2edb5fa48175978a2a07318009e7cf03c9790ca17bea"},
 ]
 typing-extensions = [
     {file = "typing_extensions-3.7.4.3-py2-none-any.whl", hash = "sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f"},
