@@ -5,7 +5,7 @@ Raleigh is a dice rolling Discord bot that makes playing D&D or other RPGs more 
 ## Adding Raleigh to your Server/Guild
 Go to the following link and add Raleigh to your desired server/Guild:
 
-[Invite Link](https://discord.com/api/oauth2/authorize?client_id=812355774763892777&permissions=519232&scope=bot)
+[Invite Link](https://discord.com/api/oauth2/authorize?client_id=812355774763892777&permissions=2048&scope=bot)
 
 Once you invite Raleigh, use the `$help` command to see what commands are available for use to your users.
 
