@@ -16,3 +16,6 @@
 **Utility Commands:**
 *Get a List of Commands* - `$roll help`
 *Turn a Roll into a PM* - `$roll 4d6 +5 secret`
+
+If you notice any errors or have any questions about using Raleigh, feel free to come over to the Raleigh Support Server and we will be happy to help!
+https://discord.gg/hZs3UAUMpD
