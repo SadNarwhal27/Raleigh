@@ -8,7 +8,7 @@ from replit import db
 # Determine the number of dice, their sides, and if vantage is called
 def get_dice(setup):
     vantage = False
-    setup = setup.lower()
+    setup = setup.lower() if setup != None else ''
 
     if setup == None:
         dice, sides = 1, 20
@@ -98,6 +98,17 @@ def check_size(text, total):
         response = get_response('end').format(total) + check_nice(total)
     else:
         response = text + get_response('end').format(total) + check_nice(total)
+    return response
+
+
+# Checks if a $roll command gets a crit
+def check_nats(rolls):
+    if max(rolls) == 20:
+        response = get_response('nat20')
+    elif max(rolls) == 1:
+        response = get_response('nat1')
+    else:
+        response = ''
     return response
 
 
@@ -250,13 +261,16 @@ async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
     response = text + text_rolls
 
     if not vantage:
-        if len(rolls) > 1:
+        if setup == None:
+            response += check_nats(rolls)
+        
+        elif len(rolls) > 1:
             total = str(sum(rolls))
             if mod != None and mod not in check_words:
                 total = get_total(total, mod)
             response = check_size(response, total)
 
-        elif setup != None and setup not in check_words:
+        elif setup not in check_words:
             if mod != None and mod not in check_words:
                 total = get_total(text_rolls, mod)
             else:
