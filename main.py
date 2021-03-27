@@ -261,24 +261,24 @@ async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
     response = text + text_rolls
 
     if not vantage:
+        modded = True if mod != None and mod not in check_words else False
+
         if setup == None:
             response += check_nats(rolls)
-        
         elif len(rolls) > 1:
             total = str(sum(rolls))
-            if mod != None and mod not in check_words:
+            if modded:
                 total = get_total(total, mod)
             response = check_size(response, total)
-
         elif setup not in check_words:
-            if mod != None and mod not in check_words:
+            if modded:
                 total = get_total(text_rolls, mod)
             else:
                 total = get_total(text_rolls, setup)
 
             if '1d' not in setup.lower():
                 response = check_size(response, total)
-            elif mod != None and mod not in check_words:
+            elif modded:
                 response = check_size(response, total)
     else:
         response += get_vantage(ctx.message.content, rolls)
@@ -290,7 +290,5 @@ async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
     else:
         await ctx.send(response)
 
-
-bot.run(TOKEN)
 
 bot.run(TOKEN)
