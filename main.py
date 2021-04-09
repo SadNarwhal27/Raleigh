@@ -52,6 +52,7 @@ def get_response(category="start"):
 # Checks the total for funny numbers
 def check_nice(total):
     quips = db['nice']
+    total = str(total)
     return quips[total] if total in quips.keys() else ''
 
 
@@ -276,9 +277,7 @@ async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
             else:
                 total = get_total(text_rolls, setup)
 
-            if '1d' not in setup.lower():
-                response = check_size(response, total)
-            elif modded:
+            if '1d' not in setup.lower() or modded:
                 response = check_size(response, total)
     else:
         response += get_vantage(ctx.message.content, rolls)
