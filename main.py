@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from replit import db
 
+# TODO make a series of locked commands to see how many servers the bot is currently in.
 
 # Determine the number of dice, their sides, and if vantage is called
 def get_dice(setup):
@@ -114,8 +115,9 @@ def check_nats(rolls):
 
 
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD = int(os.getenv('DISCORD_GUILD'))
+
+TOKEN = os.environ['DISCORD_TOKEN']
+GUILD = int(os.environ['DISCORD_GUILD'])
 
 bot = commands.Bot(command_prefix='$', case_insensitive=True)
 bot.remove_command('help')

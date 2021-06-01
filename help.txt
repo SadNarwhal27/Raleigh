@@ -15,6 +15,8 @@
 
 **Utility Commands:**
 *Get a List of Commands* - `$help`
+*Flip a coin* - `$flip`
+*Do some math* - `$calculate`
 *Turn a Roll into a DM* - `$roll 4d6 +5 secret`
 
 If you notice any errors or have any questions about using Raleigh, feel free to come over to the Raleigh Support Server and we will be happy to help!
