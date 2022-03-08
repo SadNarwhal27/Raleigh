@@ -6,6 +6,8 @@ from replit import db
 
 # TODO make a series of locked commands to see how many servers the bot is currently in.
 
+
+# TODO Put this in its own script for code management
 # Determine the number of dice, their sides, and if vantage is called
 def get_dice(setup):
     vantage = False
@@ -13,7 +15,7 @@ def get_dice(setup):
 
     if setup == None:
         dice, sides = 1, 20
-    elif 'adv' in setup or 'dis' in setup:
+    elif 'adva' in setup or 'disa' in setup:
         dice, sides = 2, 20
         vantage = True
     elif 'd' in setup:
@@ -150,6 +152,7 @@ async def fill_db(ctx):
 
 
 # Manipulates the DB of responses if on the testing server
+# TODO Put this in its own script for code management
 @bot.command(name='db')
 async def mess_with_db(ctx, command, key: str = None, *, text: str = None):
     keyed = True if key != None else False
@@ -192,6 +195,7 @@ async def help(ctx):
     await ctx.send(embed=embed)
 
 
+# TODO Put this and math in its own script for code management
 # Flips a coin
 @bot.command(name='flip')
 async def flip_coin(ctx):
@@ -206,6 +210,7 @@ async def calculate(ctx, *, message: str):
 
 
 # Rolls 7 sets of 4d6 dropping the lowest roll
+# TODO Put this in its own script for code management
 @bot.command()
 async def character(ctx):
     stats = []
@@ -219,7 +224,8 @@ async def character(ctx):
     text += ', '.join(list(map(str, stats)))
 
     mulligan = roll_dice(4, 6)
-    mulligan.remove(min(rolls))
+    mulligan.remove(min(mulligan))
+    
     text += get_response('mulligans').format(sum(mulligan))
 
     await ctx.send(text)
@@ -227,6 +233,7 @@ async def character(ctx):
 
 # Rolls a set of dice corresponding to a specific healing potion
 # TODO Figure out a way to have users add custom potions to this command
+# TODO Put this in its own script for code management
 @bot.command()
 async def potion(ctx, *, drink=None):
     potions = {
@@ -248,9 +255,12 @@ async def potion(ctx, *, drink=None):
 
 
 # The meat of the bot
+# TODO Put this in its own script for code management
 @bot.command()
 async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
-    check_words = ['secret', 'perc', 'percentile', 'percentiles', 'reroll']
+    check_words = [
+        'secret', 'perc', 'percentile', 'percentiles', 'reroll', 'simple'
+    ]
 
     # Determine the number of dice, their sides, and if vantage is called
     dice, sides, vantage = get_dice(setup)
@@ -260,11 +270,24 @@ async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
 
     # Starts assembling a response
     text = get_response() + ' '
-    text_rolls = ', '.join(list(map(str, rolls)))
+
+    if len(rolls) > 2:
+        rolls.insert(len(rolls) - 1, '&')
+        text_rolls = ', '.join(list(map(str, rolls)))
+        text_rolls = text_rolls.replace('&,', '&')
+        rolls.remove('&')
+    elif len(rolls) == 2:
+        rolls.insert(len(rolls) - 1, '&')
+        text_rolls = ' '.join(list(map(str, rolls)))
+        rolls.remove('&')
+    else:
+        text_rolls = ', '.join(list(map(str, rolls)))
+
     response = text + text_rolls
 
     if not vantage:
         modded = True if mod != None and mod not in check_words else False
+        simple = True if mod != None and mod.lower() == 'simple' else False
 
         if setup == None:
             response += check_nats(rolls)
@@ -272,7 +295,11 @@ async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
             total = str(sum(rolls))
             if modded:
                 total = get_total(total, mod)
-            response = check_size(response, total)
+                response = check_size(response, total)
+            elif simple:
+                pass
+            else:
+                response = check_size(response, total)
         elif setup not in check_words:
             if modded:
                 total = get_total(text_rolls, mod)
@@ -284,11 +311,14 @@ async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
     else:
         response += get_vantage(ctx.message.content, rolls)
 
+    # The ctx print statements are the only thing making the bot only send 1 message at the moment. Not sure why but it works for now.
     if 'secret' in ctx.message.content.lower():
         await ctx.message.author.create_dm()
         await ctx.message.author.dm_channel.send(response)
+        # print(ctx.message.text)
         await ctx.send(get_response('secret'))
     else:
+        # print(ctx.message.text)
         await ctx.send(response)
 
 

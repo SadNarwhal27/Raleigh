@@ -8,6 +8,7 @@
 *Roll a Series of Dice* - `$roll 4d6`
 *Add a Modifier* - `$roll 4d6 +5`
 *Reroll Dice Once Below a Set Number* - `$roll 4d6 +5 reroll 2`
+*Just Dice Rolls Without Totals* - `$roll simple`
 
 **D&D 5e Commands:**
 *Roll Character Stats* - `$character`
