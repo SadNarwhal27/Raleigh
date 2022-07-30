@@ -119,10 +119,11 @@ async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
     modifier = ''
     simple = False
     quip = ''
+    gif = ''
 
     if not vantage:
         modded = True if mod != None and mod not in check_words else False
-        simple = True if mod != None and mod.lower() == 'simple' else False
+        simple = True if mod != None and (setup.lower() == 'simple' or mod.lower() == 'simple') else False
 
         if setup == None:
             pass
