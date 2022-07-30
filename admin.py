@@ -1,6 +1,7 @@
 import json
 from replit import db
 
+# TODO Make a DB of gif links
 
 # Manipulates the DB of responses if on the testing server
 def db_change(command, key, text, guild, GUILD):

@@ -9,7 +9,7 @@ def get_dice(setup):
 
     if setup == None:
         dice, sides = 1, 20
-    elif 'adv' in setup or 'disa' in setup:
+    elif 'adv' in setup or 'dis' in setup:
         dice, sides = 2, 20
         vantage = True
     elif 'd' in setup:

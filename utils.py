@@ -1,4 +1,4 @@
-import random
+import discord, random
 from simpleeval import simple_eval
 
 
@@ -23,3 +23,15 @@ def get_math(message):
 def six_nine():
     response = random.choice(['Nice 👌', 'Noice 😎', 'Niiiiiice ♋'])
     return response
+
+def embed_maker(title, rolls, author, icon, quip='', gif=''):
+    if "&" not in rolls:
+        rolls = ' '
+        
+    embed=discord.Embed(title=title, description=rolls, color=0xff0000)
+    embed.set_author(name=author, icon_url=icon)
+    if quip != '':
+        embed.add_field(name=quip, value="~", inline=False)
+    if gif != '':
+        embed.set_thumbnail(url=gif)
+    return embed

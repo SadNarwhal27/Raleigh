@@ -1,13 +1,11 @@
 import discord, os
 from dice import get_dice, get_total, get_rolls
 from admin import db_change, db_fill
-from checks import get_response, check_nice, get_vantage, check_size, check_nats
+from checks import get_response, check_nice, get_vantage, check_nats
 from dnd import make_character, drink_potion
-from utils import get_help, get_flip, get_math, six_nine
+from utils import get_help, get_flip, get_math, six_nine, embed_maker
 from dotenv import load_dotenv
 from discord.ext import commands
-
-# TODO make a series of locked commands to see how many servers the bot is currently in.
 
 load_dotenv()
 
@@ -24,6 +22,16 @@ async def on_ready():
     guild = discord.utils.get(bot.guilds, id=GUILD)
     print(f'{bot.user} is connected to the following guild:\n'
           f'{guild.name}(id: {guild.id})')
+
+
+# Stops spam messages from showing up in the console
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        return
+    elif isinstance(error, discord.HTTPException):
+        print(error)
+    raise error
 
 
 # Fills the DB with data from a JSON file if on the testing server
@@ -61,18 +69,22 @@ async def calculate(ctx, *, message: str):
     await ctx.send(get_math(message))
 
 
+# A dumb command for dumb responses
+# Turn this into an embed
 @bot.command(name='69')
 async def sixty_nine(ctx):
     await ctx.send(six_nine())
 
 
 # Rolls 7 sets of 4d6 dropping the lowest roll
+# Turn this into an embed
 @bot.command()
 async def character(ctx):
     await ctx.send(make_character())
 
 
 # Rolls a set of dice corresponding to a specific healing potion
+# Turn this into an embed
 @bot.command()
 async def potion(ctx, *, drink=None):
     await ctx.send(drink_potion(drink))
@@ -91,63 +103,66 @@ async def roll(ctx, setup: str = None, mod: str = None, *, tail: str = None):
 
     # Gets the dice rolls needed
     rolls = get_rolls(mod, tail, dice, sides)
-
-    # Starts assembling a response
-    text = get_response() + ' '
-
-    
     rolls.insert(len(rolls) - 1, '&')
     text_rolls = ', '.join(list(map(str, rolls)))
     rolls.remove('&')
-    
     if len(rolls) > 2:
-        # rolls.insert(len(rolls) - 1, '&')
-        # text_rolls = ', '.join(list(map(str, rolls)))
         text_rolls = text_rolls.replace('&,', '&')
-        # rolls.remove('&')
     elif len(rolls) == 2:
-        rolls.insert(len(rolls) - 1, '&')
-        text_rolls = ' '.join(list(map(str, rolls)))
-        rolls.remove('&')
+        text_rolls = text_rolls.replace(',', '')
     else:
-        text_rolls = ', '.join(list(map(str, rolls)))
+        text_rolls = text_rolls.replace('&, ', '')
 
-    response = text + text_rolls
+    # Starts assembling a response
+    text = get_response() + ' '
+    total = ''
+    modifier = ''
+    simple = False
+    quip = ''
 
     if not vantage:
         modded = True if mod != None and mod not in check_words else False
         simple = True if mod != None and mod.lower() == 'simple' else False
 
         if setup == None:
-            response += check_nats(rolls) + check_nice(rolls)
+            pass
         elif len(rolls) > 1:
             total = str(sum(rolls))
             if modded:
                 total = get_total(total, mod)
-                response = check_size(response, total)
-            elif simple:
-                pass
-            else:
-                response = check_size(response, total)
+                modifier = ' ' + mod
         elif setup not in check_words:
             if modded:
                 total = get_total(text_rolls, mod)
+                modifier = ' ' + mod
             else:
                 total = get_total(text_rolls, setup)
 
-            if '1d' not in setup.lower() or modded:
-                response = check_size(response, total)
+    if simple:
+        text += text_rolls
+        text_rolls = ' '
+    elif total == '':
+        if vantage:
+            quip, gif, focus = get_vantage(ctx.message.content, rolls)
+            text += focus
+        else:
+            text += text_rolls
+            quip, gif = check_nats(max(rolls))
     else:
-        response += get_vantage(ctx.message.content, rolls)
+        text += str(total)
+        quip = check_nice(total)
+    text_rolls += modifier
 
     if 'secret' in ctx.message.content.lower():
         await ctx.message.author.create_dm()
-        await ctx.message.author.dm_channel.send(response)
-        # print(ctx.message.text)
+        await ctx.message.author.dm_channel.send(
+            embed=embed_maker(text, text_rolls, ctx.author.display_name,
+                              ctx.author.avatar_url, quip))
         await ctx.send(get_response('secret'))
     else:
-        # print(ctx.message.text)
-        await ctx.send(response)
+        await ctx.send(
+            embed=embed_maker(text, text_rolls, ctx.author.display_name,
+                              ctx.author.avatar_url, quip, gif))
 
 
 bot.run(TOKEN)
