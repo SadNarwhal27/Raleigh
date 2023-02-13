@@ -4,14 +4,10 @@ from simpleeval import simple_eval
 
 # Determine the number of dice, their sides, and if vantage is called
 def get_dice(setup):
-    vantage = False
     setup = setup.lower() if setup != None else ''
 
     if setup == None:
         dice, sides = 1, 20
-    elif 'adv' in setup or 'dis' in setup:
-        dice, sides = 2, 20
-        vantage = True
     elif 'd' in setup:
         temp = (setup).split('d')
         dice = int(temp[0])
@@ -21,7 +17,7 @@ def get_dice(setup):
     else:
         dice, sides = 1, 20
 
-    return dice, sides, vantage
+    return dice, sides
 
 
 # Returns the total from dice rolls plus a modifier
